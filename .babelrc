@@ -1,0 +1,8 @@
+{
+    "presets": ["next/babel"],
+    "plugins": [["styled-components", { "ssr": true }]]
+}
+
+//presets: et array med next/babel, et konfigurasjonssett som er laget, forteller babel hva den skal gjøre. next har laget en konfig som vi kan bruke
+//plugins: skal vi gjøre noe bestemt med koden i babel, gjør vi det med plugin.
+//ssr serversiderednereing er true, forteller babel at den skal gjøre kode til ssr
