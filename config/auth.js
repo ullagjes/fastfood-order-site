@@ -7,7 +7,10 @@ const AuthContext = createContext({user: null})
 //high order component
 export function AuthProvider({ children }) {
 
-    const [user, setUser] = useState()
+    const [user, setUser] = useState(null)
+    const [loading, setLoading] = useState(true)
+    const isAuthenticated = user !== null && !loading
+    //const loading = user !== null && isAuthenticated 
 
     useEffect(() => {
         return firebaseInstance.auth().onIdTokenChanged(async (user) => {
@@ -19,10 +22,13 @@ export function AuthProvider({ children }) {
                 setUser(user)
                 nookies.set(undefined, 'token', token, { path: '/' })
             }
+
+            setLoading(false)
         })
+
+
     })
 
-    // Logic
     useEffect(() => {
         const handle = setInterval( async ()=> {
             const user = firebaseInstance.auth().currentUser
@@ -33,7 +39,7 @@ export function AuthProvider({ children }) {
 
     })
 
-    return <AuthContext.Provider value={user}>{children}</AuthContext.Provider>
+    return <AuthContext.Provider value={{user, loading, isAuthenticated}}>{children}</AuthContext.Provider>
     
 
 }
