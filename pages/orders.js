@@ -22,10 +22,8 @@ export default function Orders(){
                     id: doc.id,
                     ...doc.data()
                 })
-            })
-            
+            })    
         setIncomplete(data)
-          
         })   
         
     }, [])
@@ -71,23 +69,38 @@ export default function Orders(){
         })
     }
 
+    function testValues(){
+        console.log('complete', complete)
+        console.log('pending', incomplete)
+    }
 
     return(
-        <>
+        <>  
+        <button onClick={testValues} >Test</button>
             <main>
                 <h1>Pending orders: {incomplete.length}</h1>
-                {incomplete.map(i => {
+                {incomplete.map((i, index) => {
                     
                     return(
-                        <article key={i.id} id={i.id}>
+                        <article id={i.id} key={index + i}>
                             <h2>{i.orderId}</h2>
-                            <ul>
-                                {i.food.map(j => {
+                            
+                                {i.food.map((j, index) => {
                                     return(
-                                        <li key={j.id}>{j.title}</li>
+                                        <div key={index + j}>
+                                            <h3>{j.food}, ({j.size.size}) with: </h3>
+                                            <ul>
+                                                {j.extra.map((k, index) => {
+                                                    return(
+                                                    <li key={index + k}>{k.title}</li>
+                                                    )
+                                                })}
+                                            </ul>
+                                        </div>
+                                        
                                     )
                                     })}
-                            </ul>
+                            
                             <button type="submit" onClick={orderFinished}>Order complete</button>
                         </article>
                   
@@ -95,18 +108,27 @@ export default function Orders(){
                 })}
 
                 <h1>Orders ready to collect: {complete.length}</h1>
-                {complete.map(i => {
+                {complete.map((i, index) => {
                     
                     return(
-                        <article key={i.id} id={i.id}>
+                        <article id={i.id} key={index + i}>
                             <h2>{i.orderId}</h2>
-                            <ul>
-                                {i.food.map(j => {
+                            
+                                {i.food.map((j, index) => {
                                     return(
-                                        <li key={j.id}>{j.title}</li>
+                                        <div key={index + j}>
+                                            <h3>{j.food}, ({j.size.size}) with: </h3>
+                                            <ul>
+                                                {j.extra.map((k, index) => {
+                                                    return(
+                                                    <li key={index + k}>{k.title}</li>
+                                                    )
+                                                })}
+                                            </ul>
+                                        </div>
+                                        
                                     )
                                     })}
-                            </ul>
                             <button type="submit" onClick={orderCollected}>Order collected</button>
                         </article>
                   

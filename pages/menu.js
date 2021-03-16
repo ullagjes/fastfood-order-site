@@ -2,12 +2,13 @@
 import React, {useEffect, useState} from 'react'
 import firebaseInstance from '../config/firebase'
 import readCollection from '../database/readCollection'
+import Link from 'next/link'
 import { useAuth } from '../config/auth'
 import { useRouter } from 'next/router'
 import { useBasket } from '../contexts/BasketContext'
 
 
-export default function Test({ menuItems, extraItems, drinks, registeredOrders, error }) {
+export default function Test({ menuItems, extraItems, drinks, sides, sizes, registeredOrders, error }) {
   if(error !== undefined){
     return(
       <p>En feil har oppstått: {error}</p>
@@ -15,24 +16,11 @@ export default function Test({ menuItems, extraItems, drinks, registeredOrders, 
   }
 
   const router = useRouter()
-  
-  
-  //USER AUTHENTICATION
+
+  //=======================================USER AUTHENTICATION
+  //Updates state with userid from login 
   const [userId, setUserId] = useState(null)
-
   const {user, loading, isAuthenticated} = useAuth()
-
-  if(loading){
-    return(
-      <>Loading...</>
-    )
-  }
-
-  if(!isAuthenticated) {
-    //router.push('/login')
-    return <>Du er ikke logget inn</>
-  }
-  
 
   useEffect(() => {
     if(user){
@@ -42,8 +30,311 @@ export default function Test({ menuItems, extraItems, drinks, registeredOrders, 
       setUserId(user.uid)
     }
   }, [user])
+ 
+  //============================================ORDER DATA
+  
+  //Custom hook, located in /contexts/BasketContext.js
+  const basket = useBasket()
 
-  /*useEffect(() => {
+  //Various states, updated with functions in form
+  const [isChecked, setIsChecked] = useState(true)
+  const [selectedItem, setSelectedItem] = useState(null)
+  const [selectedSize, setSelectedSize] = useState(null)
+  const [selectedExtras, setSelectedExtras] = useState([])
+  const [selectedDrink, setSelectedDrink] = useState(null)
+  const [selectedSide, setSelectedSide] = useState(null)
+  const extrasCopy = [...selectedExtras]
+  
+  //Renders form for customizing burger
+  function showOptions(event) {
+    setIsChecked(false)
+    setSelectedItem(event.target.innerText)
+    if(selectedExtras.length > 0){
+      setSelectedExtras([])
+    }
+  }
+  
+  //Updates array with selected extras for each burger
+  function updateExtras(event, price, index) {
+    if(event.target.checked){
+      setSelectedExtras([...selectedExtras, {title: event.target.value, price: price}])
+    } else {
+      extrasCopy.splice(index, 1)
+      setSelectedExtras(extrasCopy)
+    }
+  }
+
+  //creates unique ordernumber, used to display orders in making / ready
+  const [orderId, setOrderId] = useState(1000 + registeredOrders.length)
+  function createOrderId(){
+    setOrderId(orderId + 1)
+  }
+  //======================================================FIRESTORE 
+
+  //adds customer order to firestore as a new document
+  //adds order receipt in user-collection in firestore. Attached to userID
+  //calls function creating orderID
+
+  async function handleSubmit(event) {
+    event.preventDefault()
+    createOrderId()
+    const collection = firebaseInstance.firestore().collection('orders')
+    
+    await collection.doc().set({
+      food: basket.menuItems,
+      total: basket.total,
+      orderId: orderId,
+      user: userId,
+      isReady: false,
+      isCollected: false
+    })
+
+    const userCollection = firebaseInstance.firestore().collection('users')
+    await userCollection.doc(userId).update({
+      previousOrders: {orderId: basket.menuItems}
+    }) 
+
+    router.push('/receipt')
+  }
+
+  //============================================TESTING VALUES IN CONTEXT
+  function testValues(){
+    console.log('basket', basket.menuItems)
+    console.log('size', selectedSize)
+    console.log('extras', selectedExtras)
+  
+  }
+
+  //=============================================ORDER FORM
+  //Form is rendered when user clicks button with desired burger-type
+  function renderOptions(){
+    
+    return(
+      <>
+        <h2>{selectedItem}</h2>
+        <form 
+          onSubmit={(e) => {
+            e.preventDefault()
+            basket.addMenuItems({
+              food: selectedItem, 
+              size: selectedSize, 
+              extra: selectedExtras,
+              drink: selectedDrink,
+              side: selectedSide,
+              price: selectedSize.price + selectedDrink.price + selectedSide.price + selectedExtras.reduce((prev, cur) => {
+                return prev + cur.price
+              }, 0)
+            })
+            setIsChecked(true)
+          }}>
+          <h3>Select size (must be filled in)</h3>
+          <input 
+          type="radio"
+          id="small"
+          value="small"
+          name="size"
+          onChange={e => setSelectedSize({size: e.target.value, price: 149})}
+          >
+          </input>
+          <label 
+          htmlFor="small"
+          >
+          Small (149,-)
+          </label>
+          <input 
+          type="radio"
+          id="medium"
+          value="medium"
+          name="size"
+          onChange={e => setSelectedSize({size: e.target.value, price: 159})}
+          >
+          </input>
+          <label 
+          htmlFor="medium"
+          >
+          Medium (159,-)
+          </label>
+          <input 
+          type="radio"
+          id="large"
+          value="large"
+          name="size"
+          onChange={e => setSelectedSize({size: e.target.value, price: 169})}
+          >
+          </input>
+          <label 
+          htmlFor="large"
+          >
+          Large (169,-)
+          </label>
+          <br></br>
+          <h3>Add extras</h3>
+          {extraItems.map((k, index) => {
+            return(
+              <>
+                <input
+                type="checkbox"
+                name={k.title}
+                id={k.title}
+                value={k.title}
+                onChange={(event) => {updateExtras(event, k.price, index)}}
+                >
+                </input>
+                <label
+                htmlFor={k.title}
+                >
+                  {k.title} ({k.price},-)
+                </label>
+              </>
+              )
+            })
+          }
+          <br></br>
+          <h3>Add side order</h3>
+          {sides.map((m, index) => {
+            return(
+              <>
+                <input
+                key={index + m}
+                type="radio"
+                name="side"
+                id={m.title}
+                value={m.title}
+                onChange={e => setSelectedSide({side: e.target.value, price: m.price})}
+                >
+                </input>
+                <label
+                htmlFor={m.title}
+                >
+                {m.title} ({m.price},-)
+                </label>
+
+              </>
+            )
+          })}
+          <br></br>
+          <h3>Add drink</h3>
+          {drinks.map((h, index) => {
+            return(
+              <>
+                <input
+                key={index + h}
+                type="radio"
+                name="drink"
+                id={h.title}
+                value={h.title}
+                onChange={e => setSelectedDrink({drink: e.target.value, price: h.price})}
+                >
+                </input>
+                <label
+                htmlFor={h.title}
+                >
+                {h.title} ({h.price},-)
+                </label>
+
+              </>
+            )
+          })}
+          <br></br>
+          <button type="submit">Add to order</button>
+        </form>
+        
+      </>
+    )
+  }
+
+  function hideOptions() {
+    return(
+     <></>
+    )
+  }
+
+  //===========================================AUTHENTICATION
+  if(loading){
+    return(
+      <>Loading...</>
+    )
+  }
+
+  if(isAuthenticated === false) {
+    router.push('/')
+    return <>Du er ikke logget inn</>
+  }
+  
+  //=========================================RENDER MENU
+
+  return (
+    <>
+      <p>{user.email}</p>
+      <Link href="/profile">Min side</Link>
+      <div>
+        <button onClick={testValues}>Test</button>
+        {menuItems.map((i, index) => {
+          return(
+            <button key={index} onClick={showOptions}>
+              {i.title}
+            </button>
+          )
+        })
+        }
+        {(isChecked === true) ? hideOptions() : renderOptions()}
+        <div>
+          <h3>Your order</h3>
+          {basket.menuItems.map((j, index) => {
+            return(
+              <div key={index + 1}>
+                <h4>{j.food} ({j.size.size}: {j.size.price},-)</h4>
+                <p>With:</p>
+                <ul>
+                  <li>{j.side.side}: {j.side.price},-</li>
+                  <li>{j.drink.drink}: {j.drink.price},-</li>
+                  {j.extra.map((l, index) => {
+                    return(
+                      <li key={index}>{l.title}: {l.price},-</li>
+                    )
+                  })}
+                </ul>
+                <p>Sum: {j.price},-</p>
+                <button onClick={() => {basket.removeMenuItem(index)}}>Remove from order</button>
+              </div>
+              )
+            })}
+            <p>Total: {basket.total},-</p>
+          </div>
+          {(basket.menuItems.length > 0) ? <button type="submit" onClick={handleSubmit}> Place order!</button> : <></>}
+          
+      </div> 
+
+    </>
+  )
+}
+
+//=============================================SSR DATA 
+
+Test.getInitialProps = async () => {
+  
+  try {
+    const menuItems = await readCollection("menu")
+    const extraItems = await readCollection("extras")
+    const drinks = await readCollection("drinks")
+    const sides = await readCollection("sides")
+    const sizes = await readCollection("Sizes")
+    const registeredOrders = await readCollection("orders")
+    
+    return { menuItems, extraItems, drinks, sides, sizes, registeredOrders }
+
+  } catch (error) {
+    return {
+      error: error.message
+    }
+  }
+
+}
+
+
+/*
+
+/*useEffect(() => {
     firebaseInstance.auth().onAuthStateChanged((user) => {
       if(user) {
         console.log(user.email)
@@ -62,234 +353,8 @@ export default function Test({ menuItems, extraItems, drinks, registeredOrders, 
     await firebaseInstance.auth().signOut()
     setUserDisplayName(null)
     console.log('signed out', isLoggedIn)
-  }*/
-
-  //ORDER DATA
-  
-  const basket = useBasket()
-
-  const [isChecked, setIsChecked] = useState(true)
-  const [selectedItem, setSelectedItem] = useState(null)
-  const [selectedSize, setSelectedSize] = useState(null)
-  const [selectedExtras, setSelectedExtras] = useState([])
-  const extrasCopy = [...selectedExtras]
-  
-  //Renders form for customizing burger
-  function showOptions(event) {
-    setIsChecked(false)
-    setSelectedItem(event.target.innerText)
-    if(selectedExtras.length > 0){
-      setSelectedExtras([])
-    }
-  }
-  
-  //Updates array with selected extras for each burger
-  function updateExtras(event, index) {
-    
-    if(event.target.checked){
-      setSelectedExtras([...selectedExtras, event.target.value])
-    } else {
-      extrasCopy.splice(index, 1)
-      setSelectedExtras(extrasCopy)
-    }
   }
 
-
-  //creates unique ordernumber, used to display orders in making / ready
-  const [orderId, setOrderId] = useState(1000 + registeredOrders.length)
-  function createOrderId(){
-    setOrderId(orderId + 1)
-  }
-  //FIRESTORE 
-
-  //adds customer order to firestore as a new document
-  //adds order receipt in user-collection in firestore. Attached to userID
-  //calls function creating orderID
-
-  async function handleSubmit(event) {
-    event.preventDefault()
-    createOrderId()
-    const collection = firebaseInstance.firestore().collection('orders')
-    
-    await collection.doc().set({
-      food: basket.menuItems,
-      orderId: orderId,
-      user: userId,
-      isReady: false,
-      isCollected: false
-    })
-
-    const userCollection = firebaseInstance.firestore().collection('users')
-    await userCollection.doc(userId).update({
-      previousOrders: {orderId: basket.menuItems}
-    }) 
-  }
-
-  //TESTING VALUES IN CONTEXT
-  function testValues(){
-    console.log('basket', basket.menuItems)
-    console.log('size', selectedSize)
-    console.log('extras', selectedExtras)
-  }
-
-  
-  //Form is rendered when user clicks button with desired burger-type
-  function renderOptions(){
-    
-    return(
-      <>
-        <h2>{selectedItem}</h2>
-        <form 
-          onSubmit={(e) => {
-            e.preventDefault()
-            basket.addMenuItems({
-              food: selectedItem, 
-              size: selectedSize, 
-              extra: selectedExtras
-            })
-            setIsChecked(true)
-          }}>
-          <h3>Select size (must be filled in)</h3>
-          <input 
-          type="radio"
-          id="small"
-          value="small"
-          name="size"
-          onChange={e => setSelectedSize(e.target.value)}
-          >
-          </input>
-          <label 
-          htmlFor="small"
-          >
-          Small
-          </label>
-          <input 
-          type="radio"
-          id="medium"
-          value="medium"
-          name="size"
-          onChange={e => setSelectedSize(e.target.value)}
-          >
-          </input>
-          <label 
-          htmlFor="medium"
-          >
-          Medium
-          </label>
-          <input 
-          type="radio"
-          id="large"
-          value="large"
-          name="size"
-          onChange={e => setSelectedSize(e.target.value)}
-          >
-          </input>
-          <label 
-          htmlFor="large"
-          >
-          Large
-          </label>
-          <br></br>
-          <h3>Add extras</h3>
-          {extraItems.map((k, index) => {
-            return(
-              <>
-                <input
-                type="checkbox"
-                name={k.title}
-                id={k.title}
-                value={k.title}
-                onChange={(event) => {updateExtras(event, k.title, index)}}
-                >
-                </input>
-                <label
-                htmlFor={k.title}
-                >
-                  {k.title}
-                </label>
-              </>
-              )
-            })
-          }
-          <br></br>
-          <button type="submit">Add to order</button>
-        </form>
-        
-      </>
-    )
-  }
-
-  function hideOptions() {
-    return(
-     <></>
-    )
-  }
-
-
-  //MENU RENDER 
-
-  return (
-    <>
-      <p>{userId}</p>
-      <div>
-        <button onClick={testValues}>Test</button>
-        {menuItems.map((i, index) => {
-          return(
-            <button key={index} onClick={showOptions}>
-              {i.title}
-            </button>
-          )
-        })
-        }
-        {(isChecked === true) ? hideOptions() : renderOptions()}
-        <div>
-          <h3>Your order</h3>
-          {basket.menuItems.map((j, index) => {
-            return(
-              <div key={index + 1}>
-                <h4>{j.food}</h4>
-                <p>{j.size}</p>
-                <ul>
-                  {j.extra.map(l => {
-                    return(
-                      <li>{l}</li>
-                    )
-                  })}
-                </ul>
-                <button onClick={() => {basket.removeMenuItem(index)}}>Remove from order</button>
-              </div>
-              )
-            })}
-          </div>
-          {(basket.menuItems.length > 0) ? <button type="submit" onClick={handleSubmit}> Place order!</button> : <></>}
-          
-      </div> 
-
-    </>
-  )
-}
-
-
-Test.getInitialProps = async () => {
-  
-  try {
-    const menuItems = await readCollection("menu")
-    const extraItems = await readCollection("extras")
-    const drinks = await readCollection("drinks")
-    const registeredOrders = await readCollection("orders")
-    
-    return { menuItems, extraItems, drinks, registeredOrders }
-
-  } catch (error) {
-    return {
-      error: error.message
-    }
-  }
-
-}
-
-
-/*
 
 
  {menuItems.map((i, index) => {

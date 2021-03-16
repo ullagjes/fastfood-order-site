@@ -1,141 +1,113 @@
+
+//REACT
+import React, { useState, useEffect } from 'react'
+
+//FIREBASE
 import firebaseInstance from '../config/firebase'
-import readCollection from '../database/readCollection'
-import { useState, useEffect } from 'react'
 
+//FORM
+import { object, string } from "yup";
+import { useForm } from 'react-hook-form'
+import { yupResolver } from '@hookform/resolvers/yup'
 
-export default function Home({ menu, error }) {
-  if(error !== undefined){
-    return(
-      <p>En feil har oppstått: {error}</p>
-    )
-  }
+//NEXT JS
+import Link from 'next/link'
+import { useRouter } from 'next/router'
 
-  return (
-    <>
-      <main>
-        <h1>Menu</h1>
-          {menu.map(i => {
-            return (
-              <article key={i.id}>
-                <h2>{i.title}</h2>
-                <button type="submit">Add to order</button>
-              </article>
-            )
-        })}
+//STYLING
+import { Box } from 'reflexbox'
+
+const schema = object().shape({
+    email: string().required('Dette feltet er påkrevd'),
+    password: string().required('Dette feltet er påkrevd')
+})
+
+const Home = () => {
+    const router = useRouter()
+
+    const { register, handleSubmit, watch, errors } = useForm({
+        mode: 'onChange',
+        defaultValues: 
+            {
+                email: 'dinepost@epost.no'
+            },
+        resolver: yupResolver(schema)
         
-      </main>
-      <pre>
-        <code>
-          {JSON.stringify(menu, null, 2)}
-        </code>
-      </pre>
-    </>
-    
-  )
-}
-
-export async function getServerSideProps(){
-      
-      const menu = await readCollection("menu")
-      return { props: { menu } }
-
-}
-
-      
-
-  
-/*     
-
-
-/*if(!firebase.apps.length ) {
-  
-  try {
-
-  } catch {
-
-  }
-}
-
-const ref = firebaseInstance.database().ref('bestillinger')
-
-  const [product, setProduct] = useState(null)
-
-  const handleClick = () => {
-    ref.set({
-      title: 'Burgers'
     })
-  }  
-
-  useEffect(() => {
-    ref.on('value', (snapshot) => {
-        const data = snapshot.val()
-        console.log(data)
-        setProduct(data)
-      })
-  }, [])
-
-  <div>
-         <button onClick={handleClick}>Test</button> 
-         {product && <p>{product.title}</p>}
-        </div>
 
 
-
-      let array = []
-      
-     
-      
-      const orderCollection = firebaseInstance.firestore().collection('orders')
-      
-      orderCollection.onSnapshot(snapshot => {
-              
-              snapshot.forEach((doc) => {
-                array.push(doc.data())
-              })
-            })
-      
-      return { props: {menu, array}}*/
-
-
-/*let doc = document._delegate_documenter.objectValue.proto.mapValue.fields* /
-
-/**
-  /*try {
-    const collection = await firebaseInstance.firestore().collection('menu')
-    const menuData = await collection.get()
-
-    let menuItems = []
-        menuData.forEach(item => {
-            menuItems.push({
-                id: item.id,
-                ...item.data()
-            })
-        })
-
-        return { menuItems }
-  } catch (error) {
-    return {
-      error: error.message
+    const onSubmit = async (data) => {
+        console.log('Form data', data)
+        try {
+            await firebaseInstance.auth().signInWithEmailAndPassword(data.email, data.password)
+            console.log('Du er logget inn')
+            router.push('/menu')
+        } catch (error) {
+            setError(error.message)
+        }
     }
-  }*/
-  
-  
-  /*const menuItems = []
-  menu.forEach(item => {
-    menuItems.push({
-      id: item.id,
-      ...item.data()
-    })
-  })*/
+    
 
-  //const newMenutItems = await readDocument(menuItems)
+    return(
+        <>  
+            <Box></Box>
+                <form onSubmit={handleSubmit(onSubmit)}>
+                    <input 
+                    type="text" 
+                    name="email" 
+                    placeholder="email" 
+                    ref={register}
+                    //({ required: true, maxLength: 4})
+                    //onChange={event => setEmail(event.target.value)}
+                    />
+                    <input 
+                    type="password" 
+                    name="password" 
+                    placeholder="password"
+                    ref={register}
+                    //onChange={event => setPassword(event.target.value)}
+                    />
+                    <button type="submit">Logg inn</button>
+                </form>
+                <Link href="/signup">Ny hos Børres burgere? Registrer deg her.</Link>
+        
+        </>
+        
+    )
+}
 
-  /*const menuData = await menuItems.get()
+export default Home
 
-  let testArray = []
-  menuData.forEach(item => {
-    testArray.push({
-      id: item.id,
-      ...item.data()
-    })
-  })*/
+/**<form onSubmit={handleSubmit(onSubmit)}>
+                <input 
+                type="text" 
+                name="email" 
+                placeholder="email" 
+                ref={register}
+                //({ required: true, maxLength: 4})
+                //onChange={event => setEmail(event.target.value)}
+                />
+                <input 
+                type="password" 
+                name="password" 
+                placeholder="password"
+                ref={register}
+                //onChange={event => setPassword(event.target.value)}
+                 />
+                <button type="submit">Logg inn</button>
+                {error && <p>{error}</p>}
+            </form>
+            
+            
+            
+    const [email, setEmail] = useState(null)
+    const [password, setPassword] = useState(null)
+    const [error, setError] = useState(null)
+
+    
+    useEffect(() => {
+        console.log('Errors', errors)
+
+    }, [errors])
+            
+            */

@@ -9,8 +9,8 @@ export function AuthProvider({ children }) {
 
     const [user, setUser] = useState(null)
     const [loading, setLoading] = useState(true)
-    const isAuthenticated = user !== null && !loading
-    //const loading = user !== null && isAuthenticated 
+    
+    const isAuthenticated = user !== null && loading === false
 
     useEffect(() => {
         return firebaseInstance.auth().onIdTokenChanged(async (user) => {
@@ -18,9 +18,10 @@ export function AuthProvider({ children }) {
                 setUser(null)
                 nookies.set(undefined, 'token', null, { path: '/' })
             } else {
-                const token = user.getIdToken()
+                const token = await user.getIdToken()
                 setUser(user)
                 nookies.set(undefined, 'token', token, { path: '/' })
+                
             }
 
             setLoading(false)

@@ -6,28 +6,39 @@ import { useAuth } from '../config/auth'
 const Profile = () => {
 
     const router = useRouter()
-    const userContext = useAuth()
+    const { user, loading, isAuthenticated } = useAuth()
 
     useEffect(() => {
-        console.log('the context', userContext)    
-    }, [userContext])
+        console.log('the context', user)    
+    }, [loading])
     
 
     const handleSignout = async () => {
         await firebaseInstance.auth().signOut()
         
-        router.push('/test')
+        router.push('/')
 
+    }
+
+    //===========================================AUTHENTICATION
+    if(loading){
+        return(
+            <>Loading...</>
+        )
+    }
+
+    if(isAuthenticated === false) {
+        router.push('/')
+        return <>Du er ikke logget inn</>
     }
 
     return(
         <>
             <p>Profile</p>
             <button onClick={handleSignout}>Logg ut</button>
-            {userContext && (
+            {user && (
                 <>
-                <p>{userContext.email}</p>
-                <p>{userContext.uid}</p>
+                <p>{user.email}</p>
                 </>
             )}
         </>
