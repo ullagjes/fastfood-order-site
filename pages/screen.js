@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import firebaseInstance from '../config/firebase'
+//COMPONENTS
+import OrderComponent from '../components/OrderComponent'
 
 export default function Screen () {
     const [complete, setComplete] = useState([])
@@ -12,7 +14,7 @@ export default function Screen () {
         //selects all documents where isReady value is false
         .where('isReady', '==', false)
         //listener acts whenever documents with this value changes
-        ref.onSnapshot((snapshot) => {
+        return ref.onSnapshot((snapshot) => {
             let data = []
             snapshot.forEach((doc) => {
                 data.push({
@@ -32,7 +34,7 @@ export default function Screen () {
         .where('isReady', '==', true)
         .where('isCollected', '==', false)
         //listener acts whenever documents with this value changes
-        newRef.onSnapshot((snapshot) => {
+        return newRef.onSnapshot((snapshot) => {
             let newData = []
             snapshot.forEach((doc) => {
                 newData.push({
@@ -47,22 +49,24 @@ export default function Screen () {
     
     return(
         <>
-            <div>
-                <h1>Incomplete</h1>
-                {incomplete.map(i => {
-                    return(
-                       <p key={i.id}>{i.orderId}</p>
-                   )
-                })}
-            </div>
-            <div>
-                <h1>Complete</h1>
-                {complete.map(i => {
-                    return(
-                        <p key={i.orderId}>{i.orderId}</p>
+            <OrderComponent>
+                <article>
+                    <h1>In the works</h1>
+                    {incomplete.map(i => {
+                        return(
+                        <p key={i.id} className={'orderNumber'}>{i.orderId} </p>
                     )
-                })}
-            </div>
+                    })}
+                </article>
+                <article>
+                    <h1>Ready for pick up</h1>
+                    {complete.map(i => {
+                        return(
+                            <p key={i.orderId} className={'orderNumber'}>{i.orderId}</p>
+                        )
+                    })}
+                </article>
+            </OrderComponent>
         </>
     )
 }

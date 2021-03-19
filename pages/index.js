@@ -1,84 +1,102 @@
 
 //REACT
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react';
+
+//NEXT JS
+import Link from 'next/link';
+import { useRouter } from 'next/router';
 
 //FIREBASE
-import firebaseInstance from '../config/firebase'
+import firebaseInstance from '../config/firebase';
 
 //FORM
 import { object, string } from "yup";
-import { useForm } from 'react-hook-form'
-import { yupResolver } from '@hookform/resolvers/yup'
+import { useForm } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
 
-//NEXT JS
-import Link from 'next/link'
-import { useRouter } from 'next/router'
+//CONTEXT
+import { useAuth } from '../config/auth'
+
+//COMPONTENTS
+import { FormComponent, FormLink } from '../components/FormComponent';
+import HeaderComponent from '../components/HeaderComponent'
 
 //STYLING
-import { Box } from 'reflexbox'
+import { Flex, Box } from 'reflexbox';
+
 
 const schema = object().shape({
     email: string().required('Dette feltet er påkrevd'),
     password: string().required('Dette feltet er påkrevd')
-})
+});
 
 const Home = () => {
+    
     const router = useRouter()
+    
+    //==============================================USER VALIDATION
+    const { isAuthenticated } = useAuth()
+
+    if(isAuthenticated){
+        router.push('/menu')
+    }
 
     const { register, handleSubmit, watch, errors } = useForm({
         mode: 'onChange',
-        defaultValues: 
-            {
-                email: 'dinepost@epost.no'
-            },
         resolver: yupResolver(schema)
-        
-    })
-
+    });
 
     const onSubmit = async (data) => {
-        console.log('Form data', data)
         try {
             await firebaseInstance.auth().signInWithEmailAndPassword(data.email, data.password)
-            console.log('Du er logget inn')
             router.push('/menu')
-        } catch (error) {
-            setError(error.message)
-        }
-    }
-    
+        } catch (errors) {
+            console.log(errors.message)
+        };
+    };
+
 
     return(
-        <>  
-            <Box></Box>
-                <form onSubmit={handleSubmit(onSubmit)}>
-                    <input 
-                    type="text" 
-                    name="email" 
-                    placeholder="email" 
-                    ref={register}
-                    //({ required: true, maxLength: 4})
-                    //onChange={event => setEmail(event.target.value)}
-                    />
-                    <input 
-                    type="password" 
-                    name="password" 
-                    placeholder="password"
-                    ref={register}
-                    //onChange={event => setPassword(event.target.value)}
-                    />
-                    <button type="submit">Logg inn</button>
-                </form>
-                <Link href="/signup">Ny hos Børres burgere? Registrer deg her.</Link>
-        
+        <>
+            <HeaderComponent />
+            <Flex flexWrap='wrap' mt='4em'>
+                <Box width={[1, 1/2]} p={4} m='0 auto'>
+                    <h1>Burger time?</h1>
+                    <p>Log in or register a user to order delicious burgers.</p>
+                    <FormComponent onSubmit={handleSubmit(onSubmit)}>
+                        <label htmlFor="email">EMAIL:</label>
+                        <input 
+                        type="text" 
+                        name="email" 
+                        placeholder="EMAIL" 
+                        ref={register}
+                        />
+                        <label htmlFor="password">PASSWORD:</label>
+                        <input 
+                        type="password" 
+                        name="password" 
+                        placeholder="PASSWORD"
+                        ref={register}
+                        />
+                        <button type="submit">LOG IN</button>
+                        <Link href="/signup">
+                            <FormLink>New user? Register a new user here.</FormLink>
+                        </Link>
+                    </FormComponent>
+                </Box>
+            </Flex>
         </>
-        
-    )
-}
+    );
+};
 
-export default Home
+export default Home;
 
-/**<form onSubmit={handleSubmit(onSubmit)}>
+/**
+ * //({ required: true, maxLength: 4})
+                    //onChange={event => setEmail(event.target.value)}
+                    
+                    //onChange={event => setPassword(event.target.value)}
+ * <form onSubmit={handleSubmit(onSubmit)}>
                 <input 
                 type="text" 
                 name="email" 
