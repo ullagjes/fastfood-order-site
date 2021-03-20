@@ -5,6 +5,7 @@ const OrderComponent = styled.main`
     display: flex;
     width: 100%;
     max-width: 1500px;
+    margin: 1em auto;
 
     h2 {
         text-align: center;

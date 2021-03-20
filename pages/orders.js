@@ -7,10 +7,13 @@ import firebaseInstance from '../config/firebase';
 import OrderComponent from '../components/OrderComponent';
 
 export default function Orders(){
+
+    //States are updated with real time data from Firestore.
     const [complete, setComplete] = useState([]);
     const [incomplete, setIncomplete] = useState([]);
 
     //================================================FIRESTORE REAL TIME DATA
+
     //Incomplete orders
     useEffect(() => {
         let ref = firebaseInstance
@@ -18,6 +21,7 @@ export default function Orders(){
         .collection('orders')
         //selects all documents where isReady value is false
         .where('isReady', '==', false)
+
         //listener acts whenever documents with this value changes
         return ref.onSnapshot((snapshot) => {
             let data = [];
@@ -27,7 +31,7 @@ export default function Orders(){
                     ...doc.data()
                 });
             });
-        setIncomplete(data);
+            setIncomplete(data);
         });   
     }, []);
 
@@ -48,12 +52,14 @@ export default function Orders(){
                     ...doc.data()
                 });
             });
-        setComplete(newData);
+            setComplete(newData);
         });   
     }, []);
 
     //===========================================UPDATE FIRESTORE DATA
 
+    //Updates boolean in document which in turn triggers onSnapshot-listener.
+    //Sets order to isReady === true
     function orderFinished(event) {
         event.preventDefault();
         const selectedOrderId = event.target.parentElement.id;
@@ -63,6 +69,8 @@ export default function Orders(){
         });
     };
 
+    //Updates boolean in document which in turn triggers onSnapshot-listener.
+    //Sets order to isCollected === true
     function orderCollected(event) {
         event.preventDefault();
         const selectedOrderId = event.target.parentElement.id;
@@ -70,12 +78,6 @@ export default function Orders(){
         collection.doc(selectedOrderId).update({
             isCollected: true
         });
-    };
-
-    //=========================================TEST VALUES
-    function testValues(){
-        console.log('complete', complete);
-        console.log('pending', incomplete);
     };
 
     return(
@@ -96,8 +98,8 @@ export default function Orders(){
                                                 <div key={index + j}>
                                                     <h4>{j.food} ({j.size.size}) with: </h4>
                                                     <ul>
-                                                        <li>{j.drink.drink}.</li>
-                                                        <li>{j.side.side}.</li>
+                                                        <li>Drink: {j.drink.drink}.</li>
+                                                        <li>Side: {j.side.side}.</li>
                                                         {j.extra.map((k, index) => {
                                                             return(
                                                             <li key={index + k}>Extra {k.title}.</li>
@@ -112,7 +114,6 @@ export default function Orders(){
                             )}
                         </div>
                     </article>
-                
                     <article>
                         <h2>Orders ready to collect: {complete.length}</h2>
                         <div className='orderContainer'>
@@ -126,8 +127,8 @@ export default function Orders(){
                                                 <div key={index + j}>
                                                     <h4>{j.food} ({j.size.size}) with:</h4>
                                                     <ul>
-                                                        <li>{j.drink.drink}.</li>
-                                                        <li>{j.side.side}.</li>
+                                                        <li>Drink: {j.drink.drink}.</li>
+                                                        <li>Side: {j.side.side}.</li>
                                                         {j.extra.map((k, index) => {
                                                             return(
                                                             <li key={index + k}>Extra {k.title}.</li>

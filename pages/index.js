@@ -1,6 +1,6 @@
 
 //REACT
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 
 //NEXT JS
 import Link from 'next/link';
@@ -35,6 +35,7 @@ const Home = () => {
     const router = useRouter()
     
     //==============================================USER VALIDATION
+    //Variable isAuthenticated is a boolean updated in context.
     const { isAuthenticated } = useAuth()
 
     if(isAuthenticated){
@@ -46,6 +47,7 @@ const Home = () => {
         resolver: yupResolver(schema)
     });
 
+    //Form relies on authentication in Firebase
     const onSubmit = async (data) => {
         try {
             await firebaseInstance.auth().signInWithEmailAndPassword(data.email, data.password)
@@ -54,7 +56,6 @@ const Home = () => {
             console.log(errors.message)
         };
     };
-
 
     return(
         <>
@@ -82,7 +83,7 @@ const Home = () => {
                         <Link href="/signup">
                             <FormLink>New user? Register a new user here.</FormLink>
                         </Link>
-                    </FormComponent>
+                    </FormComponent>  
                 </Box>
             </Flex>
         </>
@@ -90,42 +91,3 @@ const Home = () => {
 };
 
 export default Home;
-
-/**
- * //({ required: true, maxLength: 4})
-                    //onChange={event => setEmail(event.target.value)}
-                    
-                    //onChange={event => setPassword(event.target.value)}
- * <form onSubmit={handleSubmit(onSubmit)}>
-                <input 
-                type="text" 
-                name="email" 
-                placeholder="email" 
-                ref={register}
-                //({ required: true, maxLength: 4})
-                //onChange={event => setEmail(event.target.value)}
-                />
-                <input 
-                type="password" 
-                name="password" 
-                placeholder="password"
-                ref={register}
-                //onChange={event => setPassword(event.target.value)}
-                 />
-                <button type="submit">Logg inn</button>
-                {error && <p>{error}</p>}
-            </form>
-            
-            
-            
-    const [email, setEmail] = useState(null)
-    const [password, setPassword] = useState(null)
-    const [error, setError] = useState(null)
-
-    
-    useEffect(() => {
-        console.log('Errors', errors)
-
-    }, [errors])
-            
-            */

@@ -5,17 +5,18 @@ import React, {useEffect, useState} from 'react';
 import firebaseInstance from '../config/firebase';
 import readCollection from '../database/readCollection';
 //NEXT
-import Link from 'next/link';
 import { useRouter } from 'next/router';
 //CONTEXT
 import { useAuth } from '../config/auth';
 import { useBasket } from '../contexts/BasketContext';
 //STYLE
-import { Flex, Box } from 'reflexbox';
+import { Flex } from 'reflexbox';
 import HeaderComponent from '../components/HeaderComponent'
 import {  MenuContainer, MenuBase } from '../components/MenuComponents';
 import { ShoppingCartComponent } from '../components/ShoppingCartComponent';
 
+
+//Component receives data from Firestore through initial props
 export default function Menu({ 
   menuItems, 
   extraItems, 
@@ -39,7 +40,9 @@ export default function Menu({
   const [count, setCount] = useState(null)
   const {user, loading, isAuthenticated} = useAuth();
 
-  //Updates userId-state depending on user authentication
+  //Updates userId-state depending on user authentication.
+  //Creates an orderId with an external counter in Firestore.
+  //Counter is updated in separate function.
   useEffect(() => {
     if(user){
       console.log('the context', user.uid);
@@ -64,7 +67,7 @@ export default function Menu({
   //Custom hook, located in /contexts/BasketContext.js.
   const basket = useBasket();
 
-  //Various states, updated with functions in form.
+  //Various states, states updated when user fills out the order form.
   const [isChecked, setIsChecked] = useState(true);
   const [selectedItem, setSelectedItem] = useState(null);
   const [selectedSize, setSelectedSize] = useState(null);
@@ -91,7 +94,7 @@ export default function Menu({
   };
   
   //Updates array with selected extras for each burger.
-  //Also deletes unselected extras.
+  //Also deletes extras if they are unselected.
   function updateExtras(event, price, index) {
     if(event.target.checked) {
       setSelectedExtras([...selectedExtras, {title: event.target.value, price: price}]);
@@ -101,12 +104,12 @@ export default function Menu({
     };
   };
 
-  //creates unique ordernumber, used to display orders in making / ready.
+  //orderId state is updated with count variable created earlier. 
   const [orderId, setOrderId] = useState(count);
   
-  
+  //Function updates count with counter-value in Firestore
+  //This prevents creating the same orderId if two users order at the same time.
   async function createOrderId(){
-    //setOrderId(orderId + 1);
     const counterRef = firebaseInstance
     .firestore()
     .collection('globals')
@@ -122,17 +125,14 @@ export default function Menu({
         transaction.update(counterRef, { count: newCount })
         setOrderId(newCount) 
       });
-
-      
-      
     })
   };
 
   //======================================================FIRESTORE 
 
-  //adds customer order to firestore as a new document.
-  //adds order receipt in user-collection in firestore. Attached to userID.
-  //calls function creating orderID.
+  //Adds customer order to firestore as a new document.
+  //Adds order receipt in user-collection in firestore. Attached to userID.
+  //Calls function creating orderID.
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -156,19 +156,10 @@ export default function Menu({
     router.push('/receipt');
   };
 
-  //============================================TESTING VALUES IN CONTEXT
-  function testValues(){
-    console.log('basket', basket.menuItems);
-    //console.log('size', selectedSize);
-    //console.log('extras', selectedExtras);
-    //createOrderId()
-    //console.log(orderId)
-  };
-
   //=============================================ORDER FORM
-  //Form is rendered when user clicks button with desired burger-type
 
-  //const [selectedInput, setSelectedInput] = useState('selected')
+  //Form is rendered when user clicks button with desired burger-type.
+  //Onsubmit creates a temporary array in context containing clients order as well as the total price.
 
   function renderOptions(){
 
@@ -193,7 +184,7 @@ export default function Menu({
             });
             setIsChecked(true);
             }}>
-              <h2>Customize your <span>{selectedItem}</span></h2>
+              <h2 className="formTitle">Customize your <span>{selectedItem}</span></h2>
               <h3>Select size (must be filled in)</h3>
               <input 
               type="radio"
@@ -305,23 +296,22 @@ export default function Menu({
 
   if(isAuthenticated === false) {
     router.push('/');
-    return <>Du er ikke logget inn</>
+    return <>You aren't logged in.</>
   };
   
   //=========================================RENDER MENU
 
   return (
-    <>
-      <body>
+    <main>
         <HeaderComponent />
-        <Flex flexDirection='column' mt='5em'>
-          <button onClick={testValues}>test</button>
+        <Flex flexDirection='column' mt='5em' alignItems='center'>
           <MenuBase>
-            <Flex flexDirection='column' alignItems='center'>
-              <h1>Menu</h1>
+            <h1>Menu</h1>
+            <Flex flexDirection='row' alignItems='center'>
+              
               {menuItems.map((i, index) => {
                 return(
-                  <button key={index} onClick={showOptions} >
+                  <button key={index} onClick={showOptions}>
                     {i.title}
                   </button>
                   ) 
@@ -329,9 +319,9 @@ export default function Menu({
               }
             </Flex>
           </MenuBase>
-          <main>
-            {(isChecked === true) ? hideOptions() : renderOptions()}
-          </main>  
+          
+          {(isChecked === true) ? hideOptions() : renderOptions()}
+         
           <ShoppingCartComponent>
             <h2>Your order ({basket.total},-)</h2>
               {basket.menuItems.map((j, index) => {
@@ -341,13 +331,13 @@ export default function Menu({
                       {(j.side.side !== 'none') ? <p>{j.side.side}</p> : <></>}
                       {(j.drink.drink !== 'none') ? <p>{j.drink.drink}</p> : <></>}
                       {(j.extra.length !== 0) ?
-                      <>
-                        {j.extra.map((l, index) => {
-                          return <p key={index}>{l.title}</p>
-                          })
-                        }
-                      </>
-                      : <></>
+                        <>
+                          {j.extra.map((l, index) => {
+                            return <p key={index}>{l.title}</p>
+                            })
+                          }
+                        </>
+                        : <></>
                       }
                       <p>Sum: {j.price},-</p>
                       <button onClick={() => {basket.removeMenuItem(index)}}className='remove'>X</button>
@@ -355,30 +345,25 @@ export default function Menu({
                   )
                 })
               }
-                
               {(basket.menuItems.length > 0) ? 
                 <button type="submit" onClick={handleSubmit}> Place order!</button> 
                 : <></>
               }
           </ShoppingCartComponent>
         </Flex>
-      </body>
-    </>
-  )
-      
+    </main>
+  )      
 }
 
 //=============================================SSR DATA 
 
 Menu.getInitialProps = async () => {
-  
   try {
     const menuItems = await readCollection("menu");
     const extraItems = await readCollection("extras");
     const drinks = await readCollection("drinks");
     const sides = await readCollection("sides");
-    
-    
+
     return { menuItems, extraItems, drinks, sides };
 
   } catch (error) {
@@ -386,151 +371,4 @@ Menu.getInitialProps = async () => {
       error: error.message
     };
   };
-
 };
-
-/**/
-
-
-/*
-
-/*useEffect(() => {
-    firebaseInstance.auth().onAuthStateChanged((user) => {
-      if(user) {
-        console.log(user.email)
-        setUserId(user.uid)
-        setUserDisplayName(user.email)
-        setIsLoggedIn(true)
-      } else {
-        console.log('wups')
-        setUserId(null)
-        setIsLoggedIn(false)
-      }
-    })
-  }, [])*/
-  
-  /*async function handleSignOut() {
-    await firebaseInstance.auth().signOut()
-    setUserDisplayName(null)
-    console.log('signed out', isLoggedIn)
-  }
-
-
-
- {menuItems.map((i, index) => {
-          return(
-            <form 
-            key={index} 
-            //onSubmit={event => addToOrder(event, i.title, i.id)}
-            onSubmit={(event) => {
-              event.preventDefault()
-              basket.addMenuItems({
-                title: i.title,
-                id: i.id,
-                quantity: 1
-              })
-            }}
-            >
-              <h2>{i.title}</h2>
-              <br></br>
-              
-              <button type="submit">Add</button>
-            </form>
-            
-            )
-          })
-        }
-        <div>{basket.menuItems.map((j, index) => {
-          return(
-              <>
-                <p key={index} id={j.id}>{j.title} {j.quantity}</p>
-                <button onClick={increaseCount}> + </button>
-                <button onClick={decreaseCount}> - </button>
-              </>
-            )
-          })
-        }
-        </div>
-        <button onClick={handleSubmit}>Bestill</button>
-
-<p key={index}>{j.title} {j.quantity}</p>
-
-<button onClick={basket.removeMenuItem}> - </button>
-<input 
-              type="number" 
-              name="quantity" 
-              id="quantity"
-              onChange={event => countItems(event)}
-              >
-              </input>
-
-            //<div key={i.id} id={i.id}>
-              //<p>{i.title}</p>
-              //<input type="number" name="quantity" onChange={countItems}></input>
-              //<button onClick={addToOrder(i.title)}>Add</button>
-            //</div>
-//empty array filled with menuitems. 
-  //later exported to firestore in separate function
-  //const [order, setOrder] = useState([])
-  //const [quantity, setQuantity] = useState(null)
-  //adds menuitems to customer order.
-  /*async function addToOrder(event, title, id) {
-    event.preventDefault()
-    /*const selectedItem = await {
-      title: title,
-      quantity: quantity,
-      id: id
-    }
-
-
-    setOrder(prevOrder => [...prevOrder, selectedItem])
-    setQuantity(null)
-  }
-*<div key={i.id} id={i.id}>
-              <p>{i.title}</p>
-              <input type="number" name="quantity"></input>
-              <button onClick={addToOrder}>Add</button>
-            </div>
-            <button onClick={addToDatabase}>Bestill</button>
-            <pre>
-        <code>
-          {JSON.stringify(incomplete, null, 2)}
-        </code>
-      </pre> 
-      <form 
-              name="menu"
-              id="menu"
-              action="/"
-              method="GET"
-              onSubmit={handleSubmit}
-            >
-              <h2 key={i.id}>{i.title}</h2>
-              <label htmlFor={i.title}>Antall</label>
-              <input type="number" name={i.title}></input>
-              <button onClick={addToOrder}>Add to order</button>
-            </form>
-      
-      
-  /*async function writeDocument(event) {
-    let id = event.target.parentElement.id
-    let collection = await firebaseInstance.firestore().collection('menu')
-    let document = await collection.doc(id).update({
-      title: 'burger',
-      isSelected: false
-    })
-    let clickedItem = {
-        id: document.id,
-        ...document.data()
-      }
-    //console.log(document) 
-
-
-      
-  //const userContext = useAuth()
-
-  /*useEffect(() => {
-    console.log(userContext)
-  }, [userContext])*/
-
-  //const router = useRouter()
-  //}

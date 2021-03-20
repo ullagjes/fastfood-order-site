@@ -1,4 +1,6 @@
+//REACT
 import React, { useEffect, useState } from 'react'
+//FIREBASE
 import firebaseInstance from '../config/firebase'
 //COMPONENTS
 import OrderComponent from '../components/OrderComponent'
@@ -7,6 +9,7 @@ export default function Screen () {
     const [complete, setComplete] = useState([])
     const [incomplete, setIncomplete] = useState([])
 
+    //=========================================REAL TIME DATA
     useEffect(() => {
         let ref = firebaseInstance
         .firestore()
@@ -54,17 +57,19 @@ export default function Screen () {
                     <h1>In the works</h1>
                     {incomplete.map(i => {
                         return(
-                        <p key={i.id} className={'orderNumber'}>{i.orderId} </p>
-                    )
-                    })}
+                            <p key={i.id} className={'orderNumber'}>{i.orderId} </p>
+                            )
+                        })
+                    }
                 </article>
                 <article>
                     <h1>Ready for pick up</h1>
                     {complete.map(i => {
                         return(
                             <p key={i.orderId} className={'orderNumber'}>{i.orderId}</p>
-                        )
-                    })}
+                            )
+                        })
+                    }
                 </article>
             </OrderComponent>
         </>

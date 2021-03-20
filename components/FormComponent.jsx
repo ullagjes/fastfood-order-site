@@ -41,6 +41,10 @@ export const FormComponent = styled.form`
         background-color: ${props => props.theme.colors.white}
     }
 
+    button:focus {
+        border: ${props => props.theme.borders.hover};
+    }
+
     button:hover {
         border: ${props => props.theme.borders.hover};
     }
@@ -55,6 +59,10 @@ export const FormLink = styled.a`
     margin-top: ${props => props.theme.space[4]};
 
     :hover {
+        text-decoration: underline;
+    }
+
+    :focus {
         text-decoration: underline;
     }
 

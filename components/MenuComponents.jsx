@@ -4,9 +4,10 @@ import styled from 'styled-components'
 
 export const MenuBase = styled.main`
     width: 90vw;
-    max-width: 1200px;
+    max-width: 720px;
     margin: .5em auto;
     padding-bottom: ${props => props.theme.space[2]};
+
 
     button {
         width: 100%;
@@ -15,10 +16,19 @@ export const MenuBase = styled.main`
         font-size: 1.5em;
         cursor: pointer;
         background-color: ${props => props.theme.colors.white};
-        
+        &:not(:first-child) {
+            margin-left: ${props => props.theme.space[1]};
+        }
+        &:not(:last-child) {
+            margin-right: ${props => props.theme.space[1]};
+        }
         margin-top: ${props => props.theme.space[1]};    
         margin-bottom: .2em;
         
+    }
+
+    h1 {
+        text-align: center;
     }
 
     button:hover {
@@ -43,6 +53,8 @@ export const MenuContainer = styled.main`
 
     article {
         width: 100%;
+        max-width: 720px;
+        min-width: 600px;
         margin: 1em auto;
         border: ${props => props.theme.borders.thick};
         padding: ${props => props.theme.space[3]};
@@ -51,10 +63,14 @@ export const MenuContainer = styled.main`
 
     form {
         width: 100%;
+        max-width: 720px;
+        
+        min-width: 600px;
         margin: 2em auto;
         border: ${props => props.theme.borders.thick};
         height: auto;
         padding: ${props => props.theme.space[3]};
+        
         
         label {
             font-size: 1.2rem;
@@ -62,6 +78,10 @@ export const MenuContainer = styled.main`
         }
 
         label:hover{
+            color: ${props => props.theme.colors.primary}  
+        }
+
+        input[checkbox]:focus {
             color: ${props => props.theme.colors.primary}  
         }
 

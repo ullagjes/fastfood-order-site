@@ -2,6 +2,8 @@
 import Document from 'next/document'
 import { ServerStyleSheet } from 'styled-components'
 
+//Enables styled components with Next
+
 export default class MyDocument extends Document {
   static async getInitialProps(ctx) {
     const sheet = new ServerStyleSheet()
@@ -30,5 +32,3 @@ export default class MyDocument extends Document {
   }
 }
 
-//hver gang det lages et htmldokument, skal det lage et serverstylesheet. rendrer side, og hver gang den rendrer, skal den samle inn alle css-regler og legge inn i stylesheet. Legger på css på dokumentet
-//finally går etter try/catch, går uansett om det er error eller ikke. Lager stylesheet.

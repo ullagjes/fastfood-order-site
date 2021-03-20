@@ -13,14 +13,12 @@ function MyApp({ Component, pageProps }) {
   return (
     <>
       <ThemeProvider theme={theme}>
-      <GlobalStyle /> 
-      
+        <GlobalStyle /> 
         <AuthProvider>
-        
           <Basket>
             <Component {...pageProps} />
           </Basket>
-          </AuthProvider>
+        </AuthProvider>
       </ThemeProvider>
     </>
     );

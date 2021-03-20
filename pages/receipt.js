@@ -4,24 +4,24 @@ import React, { useEffect, useState } from 'react';
 import firebaseInstance from '../config/firebase';
 //NEXT
 import { useRouter } from 'next/router';
-import Link from 'next/link';
 //CONTEXT
 import { useAuth } from '../config/auth'
 //COMPONENTS
 import HeaderComponent from '../components/HeaderComponent'
 //STYLE
-import { MenuBase, MenuContainer } from '../components/MenuComponents';
 import ReceiptComponent from '../components/ReceiptComponent'
-import { Box, Flex } from 'reflexbox';
+import { Box } from 'reflexbox';
 
 export default function Receipt () {
-    
+    //Userinfo from context. Located in /config/auth.js.
+    //UserId is updated with context.
     const { user, loading, isAuthenticated } = useAuth();
-    
-    const [userOrder, setUserOrder] = useState([]);
-    const [orderComplete, setOrderComplete] = useState([]);
     const [userId, setUserId] = useState(null);
 
+    //States updated with real time data from Firestore.
+    const [userOrder, setUserOrder] = useState([]);
+    const [orderComplete, setOrderComplete] = useState([]);
+    
     const router = useRouter();
 
     //===============================================ORDERDATA
@@ -31,8 +31,6 @@ export default function Receipt () {
         }
     }, [loading]);
 
-    
-
     //Realtime data from firestore. 
     //Is filtered with userid from Auth context.
     useEffect(() => {
@@ -40,6 +38,7 @@ export default function Receipt () {
             let ref = firebaseInstance
             .firestore()
             .collection('orders')
+
             //selects all documents where user value matches user id in context.
             .where('user', '==', userId)
             .where('isReady', '==', false)
@@ -47,6 +46,7 @@ export default function Receipt () {
             if(ref.empty){
                 console.log('no document')
             };
+
             //listener acts whenever documents with this value changes.
             return ref.onSnapshot((snapshot) => {
                 let data = []
@@ -65,7 +65,6 @@ export default function Receipt () {
     //Realtime data from firestore. 
     //Updates when order is changed/updated in firestore.
     useEffect(() => {
-        
         if(user){
             let newRef = firebaseInstance
             .firestore()
@@ -93,15 +92,6 @@ export default function Receipt () {
         };
     }, [userOrder]);
 
-    //==========================================TEST VALUES
-    //function testValues(){
-    //    console.log('user context', user.uid)
-        //console.log('email', user.email)
-    //    console.log('realtime data', userOrder)
-        //console.log('complete', orderComplete)
-        //console.log(!user)
-    //};
-
     //===========================================AUTHENTICATION
     if(loading) {
         return(
@@ -118,90 +108,88 @@ export default function Receipt () {
     return(
             <>  
                 <HeaderComponent />
-                
                 <Box width={[1]} mt='8em'>
                     <ReceiptComponent>
-                            <div>
-                                <h1>Receipt</h1>
-                            
-                                <p>Thank you for your order. Keep an eye on the screen by the counter or in your app to see when your order is done.</p>
-                            </div>
-                            <>
-                                {userOrder.map((l, index) => {
-                                    return(
-                                        <article>
-                                            <h2>{l.orderId}</h2>
-                                            <div key={index + l}>{l.food.map((j, index) => {
-                                                return(
-                                                    <div key={index + j}>
-                                                        {j.food} 
-                                                        ({j.size.size}) 
-
-                                                        {(j.extra !== 'none') ? j.extra.map((l) => {
-                                                            return <p>{l.title}</p>
-                                                        }) : <></> }
-
-                                                        {(j.drink.drink !== 'none') ? <p> {j.drink.drink} </p> : <></> }
-
-                                                        {(j.side.side !== 'none') ? <p>and {j.side.side}</p> : <></> }
-
-                                                    </div>
-                                                    )
-                                                })}
-                                            </div>
-                                            <p>Sum: {l.total}</p>
-                                        </article>
+                        <div>
+                            <h1>Your order</h1>
+                            <p>Thank you for your order. Keep an eye on the screen by the counter or in your app to see when your order is done.</p>
+                        </div>
+                        <section>
+                            <h2>Order status:</h2>
+                            <article className="orderNumberContainer">
+                                {userOrder.map((i, index) => {
+                                    return <p className="orderNumber" key={index + i}>{i.orderId} is cooking.</p>
+                                    })
+                                }
+                                {orderComplete && orderComplete.map(j => {
+                                    return (
+                                        <p className="orderNumberComplete">{j.orderId} is ready!</p>
                                         )
                                     })
                                 }
-                            </>
-                            <h2>Order status:</h2>
-                            {userOrder.map((i, index) => {
-                                return <p className="orderNumber" key={index + i}>{i.orderId} is cooking.</p>
-                                })
-                            }
-                            {orderComplete && orderComplete.map(j => {
-                                return (
-                                    <p className="orderNumber">{j.orderId} is ready.</p>
+                                {(orderComplete.length === 0 && userOrder.length === 0) ? 
+                                    <>
+                                        <p>No orders pending.</p>
+                                    </> 
+                                    : <></> 
+                                }
+                            </article>
+                        </section>
+
+                        <section>
+                            {userOrder.map((l, index) => {
+                                return(
+                                    <article className="orderDetailsArticle">        
+                                        <h2>{l.orderId} (preparing)</h2>
+                                        <div key={index + l}>
+                                            {l.food.map((j, index) => {
+                                                return(
+                                                    <div className="orderCard" key={index + j}>
+                                                        {j.food} 
+                                                        ({j.size.size}) with:
+                                                        {(j.extra !== 'none') ? j.extra.map((l, index) => {
+                                                            return <p key={index + l}>Extra {l.title}</p>
+                                                        }) : <></> }
+                                                        {(j.drink.drink !== 'none') ? <p> {j.drink.drink} </p> : <></> }
+                                                        {(j.side.side !== 'none') ? <p>and {j.side.side}.</p> : <></> }
+                                                    </div>
+                                                )
+                                            })}
+                                        </div>
+                                        <p className="sum">Sum: {l.total},-</p>
+                                    </article>
                                     )
                                 })
                             }
-                            {(orderComplete === []) ? 
-                                <>
-                                    <p>No orders.</p>
-                                </> 
-                                : <></> 
+                        </section>
+
+                        <section>
+                            {orderComplete.map((l, index) => {
+                                return(
+                                    <article className="orderCompleteArticle">
+                                        <h2>{l.orderId} (finished)</h2>
+                                        <div key={index + l}>{l.food.map((j, index) => {
+                                            return(
+                                                <div key={index + j}>
+                                                    {j.food} 
+                                                    ({j.size.size}) 
+                                                    {(j.extra !== 'none') ? j.extra.map((l) => {
+                                                        return <p>{l.title}</p>
+                                                    }) : <></> }
+                                                    {(j.drink.drink !== 'none') ? <p> {j.drink.drink} </p> : <></> }
+                                                    {(j.side.side !== 'none') ? <p>and {j.side.side}.</p> : <></> }
+                                                </div>
+                                                )
+                                            })}
+                                        </div>
+                                        <p>Sum: {l.total},-</p>
+                                    </article>
+                                    )
+                                })
                             }
+                        </section>
                     </ReceiptComponent>
                 </Box>
             </>
     );
 };
-
-
-/*export const getServerSideProps = async () => {
-    try {
-        const dataBase = await firebaseInstance.firestore().collection('orders')
-        const currentUserOrder = await dataBase.get()
-
-        userData = ['hei']
-
-        currentUserOrder.forEach(doc => {
-            userData.push({
-                id: doc.id,
-                ...doc.data()
-            })
-        })
-
-
-
-
-        return { props: {userData } }
-
-    } catch(error) {
-        return {
-            error: error.message
-        }
-    }
-}*/
-

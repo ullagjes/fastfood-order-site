@@ -1,5 +1,5 @@
 //REACT
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 
 //FIREBASE
 import firebaseInstance from '../config/firebase';
@@ -36,6 +36,7 @@ const Signup = () => {
         resolver: yupResolver(schema)
     });
 
+    //Form function creates user in Firebase with data filled in.
     const onSubmit = async (data) => {
         console.log('data', data);
         console.log(errors)
@@ -52,6 +53,7 @@ const Signup = () => {
         }
     }
 
+    //Function creates a separate document in Firestore collection with user-information.
     function addToUsers(user) {
         const userCollection = firebaseInstance.firestore().collection('users');
         userCollection.doc(user.uid).set({
@@ -67,83 +69,31 @@ const Signup = () => {
                 <Box width={[1, 1/2]} p={4} m='0 auto'>
                 <h1>Register new user</h1>
                 <p>Create a new user with your email adress.</p>
-                <FormComponent onSubmit={handleSubmit(onSubmit)}>
-                <label htmlFor="email">EMAIL:</label>
-                <input 
-                type="text" 
-                name="email" 
-                placeholder="EMAIL" 
-                ref={register}
-                />
-                <label htmlFor="password">PASSWORD:</label>
-                <input 
-                type="password" 
-                name="password" 
-                placeholder="PASSWORD" 
-                ref={register}
-                />
-                <button type="submit">REGISTER USER</button>
-                {error && <p>{error}</p>}
-                <Link href="/">
-                    <FormLink>Already registered? Log in here.</FormLink>
-                </Link>
-                </FormComponent>
-            </Box>
-        </Flex>  
+                    <FormComponent onSubmit={handleSubmit(onSubmit)}>
+                    <label htmlFor="email">EMAIL:</label>
+                    <input 
+                    type="text" 
+                    name="email" 
+                    placeholder="EMAIL" 
+                    ref={register}
+                    />
+                    <label htmlFor="password">PASSWORD:</label>
+                    <input 
+                    type="password" 
+                    name="password" 
+                    placeholder="PASSWORD" 
+                    ref={register}
+                    />
+                    <button type="submit">REGISTER USER</button>
+                    {error && <p>{error}</p>}
+                    <Link href="/">
+                        <FormLink>Already registered? Log in here.</FormLink>
+                    </Link>
+                    </FormComponent>
+                </Box>
+            </Flex>  
         </>
-        
     );
 };
 
 export default Signup;
-
-/*
-
-
-
-    const [email, setEmail] = useState(null)
-    const [password, setPassword] = useState(null)event.preventDefault()
-
-        try {
-            await firebaseInstance.auth().createUserWithEmailAndPassword(email, password)
-            firebaseInstance.auth().onAuthStateChanged((user) => {
-            addToUsers(user)
-            router.push('/menu')
-            })
-            
-        } catch (error) {
-            setError(error.message)
-            console.log('Noe gikk galt')
-        }
-    }
-
-    function addToUsers(user) {
-        const userCollection = firebaseInstance.firestore().collection('users')
-        userCollection.doc(user.uid).set({
-            userId: user.uid,
-            email: user.email,
-            previousOrders: []
-        })
-    }
-    return(
-        <>
-            <Link href="/login">Har du allerede bruker? Logg inn her.</Link>
-            <form onSubmit={handleSubmit}>
-                <input 
-                type="text" 
-                name="email" 
-                placeholder="email" 
-                onChange={event => setEmail(event.target.value)}
-                />
-                <input 
-                type="password" 
-                name="password" 
-                placeholder="password" 
-                onChange={event => setPassword(event.target.value)}
-                />
-                <button type="submit">Registrer deg</button>
-                {error && <p>{error}</p>}
-            </form>
-        </>
-        
-    ) */

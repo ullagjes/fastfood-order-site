@@ -4,8 +4,12 @@ export const ShoppingCartComponent = styled.article`
 
     border: ${props => props.theme.borders.thick};
     width: 90vw;
+    max-width: 720px;
+    min-width: 600px;
     margin: 1em auto;
+
     padding: ${props => props.theme.space[2]};
+    
     button {
         width: 50%;
         margin: 1em auto;

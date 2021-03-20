@@ -18,6 +18,7 @@ const GlobalStyle = createGlobalStyle`
         font-family: 'Helvetica', 'Sans-Serif';
     }
 
+
     .globalMain h1 {
         font-family: 'Rock Salt', cursive;
         text-align: center;
